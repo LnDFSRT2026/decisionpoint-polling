@@ -273,6 +273,15 @@ function setupControlStream() {
             
             if (data.action === 'new-question') {
                 displayQuestion(data.index);
+            } else if (data.action === 'sync') {
+                // If participant is on a different question, sync them
+                if (currentQuestionIndex !== data.index) {
+                    displayQuestion(data.index);
+                }
+                // If facilitator has already revealed the answer, show it to late-joiners
+                if (data.revealed) {
+                    handleReveal(data.correct);
+                }
             } else if (data.action === 'reveal') {
                 handleReveal(data.correct);
             }
