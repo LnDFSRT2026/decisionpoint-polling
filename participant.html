@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotality Live Polling - Participant</title>
+    <style>
+        :root {
+            --brand-primary: #674bff;
+            --brand-secondary: #3c39d3;
+            --brand-light: #f1efff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --error: #ef4444;
+            --error-light: #fef2f2;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .poll-container {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            max-width: 500px;
+            width: 100%;
+            padding: 24px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+        }
+
+        .header {
+            border-bottom: 2px solid var(--brand-light);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .room-tag {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--brand-primary);
+            background-color: var(--brand-light);
+            padding: 4px 10px;
+            border-radius: 99px;
+            display: inline-block;
+        }
+
+        .question-text {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .options-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .option-item {
+            background-color: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-item:hover {
+            border-color: var(--brand-primary);
+            background-color: #faf9ff;
+        }
+
+        .option-item.selected {
+            background-color: var(--brand-light);
+            border-color: var(--brand-primary);
+            font-weight: 500;
+        }
+
+        .option-item.correct {
+            background-color: var(--success-light);
+            border-color: var(--success);
+            color: #065f46;
+        }
+
+        .option-item.incorrect {
+            background-color: var(--error-light);
+            border-color: var(--error);
+            color: #991b1b;
+        }
+
+        .badge {
+            font-weight: 700;
+            margin-right: 12px;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .option-item.selected .badge {
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary);
+            color: white;
+        }
+
+        .option-item.correct .badge {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .option-item.incorrect .badge {
+            background-color: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        .btn {
+            background-color: var(--brand-primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.15s;
+        }
+
+        .btn:hover {
+            background-color: var(--brand-secondary);
+        }
+
+        .btn:disabled {
+            background-color: var(--border-color);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .waiting-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 10px;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(103, 75, 255, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--brand-primary);
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="poll-container" id="connection-screen">
+    <div class="header">
+        <div class="room-tag">Establish Connection</div>
+        <h2 style="margin: 8px 0 0 0;">Enter Room Code</h2>
+    </div>
+    <p style="font-size: 14px; text-align: center; color: var(--text-muted);">Enter the 6-character room code displayed on the facilitator screen to join.</p>
+    <input type="text" id="room-input" placeholder="e.g. COT-123" style="width: 100%; padding: 12px; font-size: 18px; border-radius: 8px; border: 2px solid var(--border-color); text-align: center; margin-bottom: 16px; box-sizing: border-box; text-transform: uppercase;">
+    <button class="btn" onclick="connectToRoom()">Join Poll</button>
+</div>
+
+<div class="poll-container" id="waiting-screen" style="display: none;">
+    <div class="waiting-overlay">
+        <div class="spinner"></div>
+        <h3 id="waiting-status">Waiting for Facilitator...</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">The poll will begin automatically when the host launches the scenario.</p>
+    </div>
+</div>
+
+<div class="poll-container" id="quiz-screen" style="display: none;">
+    <div class="header">
+        <div class="room-tag" id="active-room-tag">Room: COT-000</div>
+    </div>
+    <div class="question-text" id="question-text">Scenario loading...</div>
+    <ul class="options-list" id="options-list"></ul>
+    <button class="btn" id="submit-btn" onclick="submitVote()" disabled>Submit My Choice</button>
+</div>
+
+<script>
+const voterId = 'VOTER-' + Math.random().toString(36).substr(2, 9);
+let roomCode = null;
+let currentQuestionIndex = null;
+let selectedOption = null;
+let hasVoted = false;
+let controlSSE = null;
+
+const quizData = [
+    {
+        "question": "You are documenting a water-damaged bedroom in the field using the Estimate iOS app. The room is heavily furnished with a king-sized bed, large wardrobes, and thick curtains blocking several wall segments. You use the Lidar scan feature to quickly map the room. What is your correct next step before moving on to adding database items?",
+        "options": [
+            { "id": "A", "text": "Immediately search the database and apply the repair items, trusting the Lidar scan to have auto-calculated exact wall lengths and ceiling heights." },
+            { "id": "B", "text": "Delete the scanned floorplan and draw the bedroom manually from scratch to avoid any furniture-related inaccuracies." },
+            { "id": "C", "text": "Physically confirm the key measurements on-site and use the app’s editing tools to adjust any wall segments distorted by the furniture or curtains." },
+            { "id": "D", "text": "Upload the unverified scan directly to the claim file and leave a note for the internal desk adjuster to audit the dimensions." }
+        ]
+    },
+    {
+        "question": "You are preparing a roof estimate for a complex wind claim. You have an active Hover integration report containing complete dimensions and roof diagrams. To leverage these integration measurements inside your active claim workflow on Estimate iOS, where must the Hover data be uploaded?",
+        "options": [
+            { "id": "A", "text": "Directly import the Hover XML file from your mobile device's local downloads folder using the Roofplan menu." },
+            { "id": "B", "text": "Upload the Hover integration report through the desktop Estimate or Workspace platform first." },
+            { "id": "C", "text": "Manually re-sketch the entire roof layout on your mobile device using the Hover PDF report as a visual guide." },
+            { "id": "D", "text": "Send the Hover report directly to the policyholder via text link to initiate an automatic mobile sync." }
+        ]
+    }
+];
+
+const urlParams = new URLSearchParams(window.location.search);
+const urlRoom = urlParams.get('room');
+if (urlRoom) {
+    document.getElementById('room-input').value = urlRoom;
+    setTimeout(() => { connectToRoom(); }, 300);
+}
+
+function connectToRoom() {
+    const input = document.getElementById('room-input').value.trim().toUpperCase();
+    if (!input) return;
+    
+    roomCode = input;
+    document.getElementById('active-room-tag').innerText = `Room: ${roomCode}`;
+    document.getElementById('connection-screen').style.display = 'none';
+    document.getElementById('waiting-screen').style.display = 'block';
+    
+    setupControlStream();
+}
+
+function setupControlStream() {
+    if (controlSSE) controlSSE.close();
+    
+    controlSSE = new EventSource(`https://ntfy.sh/cotality-${roomCode}-control/sse`);
+    controlSSE.onmessage = (event) => {
+        try {
+            const payload = JSON.parse(event.data);
+            const data = JSON.parse(payload.message);
+            
+            if (data.action === 'new-question') {
+                displayQuestion(data.index);
+            } else if (data.action === 'reveal') {
+                handleReveal(data.correct);
+            }
+        } catch(e) {}
+    };
+}
+
+function displayQuestion(index) {
+    currentQuestionIndex = index;
+    selectedOption = null;
+    hasVoted = false;
+    
+    const currentQuestion = quizData[index];
+    document.getElementById('question-text').innerText = currentQuestion.question;
+    
+    const optionsList = document.getElementById('options-list');
+    optionsList.innerHTML = '';
+    
+    currentQuestion.options.forEach(option => {
+        const li = document.createElement('li');
+        li.className = 'option-item';
+        li.dataset.id = option.id;
+        li.innerHTML = `<span class="badge">${option.id}</span> <span>${option.text}</span>`;
+        li.onclick = () => selectOption(li, option.id);
+        optionsList.appendChild(li);
+    });
+    
+    document.getElementById('submit-btn').style.display = 'block';
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').innerText = 'Submit My Choice';
+    
+    document.getElementById('waiting-screen').style.display = 'none';
+    document.getElementById('quiz-screen').style.display = 'block';
+}
+
+function selectOption(element, id) {
+    if (hasVoted) return;
+    
+    const options = document.querySelectorAll('.option-item');
+    options.forEach(opt => opt.classList.remove('selected'));
+    
+    element.classList.add('selected');
+    selectedOption = id;
+    document.getElementById('submit-btn').disabled = false;
+}
+
+async function submitVote() {
+    if (hasVoted || !selectedOption) return;
+    hasVoted = true;
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').innerText = 'Vote Transmitted!';
+    
+    try {
+        await fetch(`https://ntfy.sh/cotality-${roomCode}-results`, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'vote',
+                questionIndex: currentQuestionIndex,
+                voterId: voterId,
+                option: selectedOption
+            })
+        });
+    } catch(err) {
+        console.error("Error submitting vote:", err);
+    }
+}
+
+function handleReveal(correctOption) {
+    const options = document.querySelectorAll('.option-item');
+    options.forEach(opt => {
+        const id = opt.dataset.id;
+        if (id === correctOption) {
+            opt.classList.add('correct');
+        } else if (id === selectedOption) {
+            opt.classList.add('incorrect');
+        }
+    });
+    document.getElementById('submit-btn').style.display = 'none';
+}
+</script>
+</body>
+</html>
